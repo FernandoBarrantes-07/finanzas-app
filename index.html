@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Finanzas CR" />
+  <title>Finanzas CR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="app">
+
+    <!-- Header -->
+    <header>
+      <div class="header-top">
+        <div>
+          <p class="header-label">MIS FINANZAS</p>
+          <h1 id="mes-actual">Cargando...</h1>
+        </div>
+        <div class="header-icon">₡</div>
+      </div>
+
+      <!-- Balance principal -->
+      <div class="balance-card">
+        <p class="balance-label">Disponible este mes</p>
+        <h2 id="total-disponible" class="balance-amount">₡0</h2>
+        <div class="balance-bar-track">
+          <div class="balance-bar-fill" id="balance-bar"></div>
+        </div>
+        <p class="balance-hint" id="balance-hint">Agregá tus ingresos para comenzar</p>
+      </div>
+    </header>
+
+    <!-- Tarjetas de resumen -->
+    <section class="resumen">
+      <div class="tarjeta">
+        <div class="tarjeta-icon ingreso-icon">↑</div>
+        <p class="tarjeta-label">Ingresos</p>
+        <h3 id="total-ingresos" class="tarjeta-monto ingreso-color">₡0</h3>
+      </div>
+      <div class="tarjeta">
+        <div class="tarjeta-icon gasto-icon">↓</div>
+        <p class="tarjeta-label">Gastos</p>
+        <h3 id="total-gastos" class="tarjeta-monto gasto-color">₡0</h3>
+      </div>
+      <div class="tarjeta">
+        <div class="tarjeta-icon gasolina-icon">⛽</div>
+        <p class="tarjeta-label">Gasolina</p>
+        <h3 id="total-gasolina" class="tarjeta-monto gasolina-color">₡0</h3>
+      </div>
+    </section>
+
+    <!-- Gráfico -->
+    <section class="card grafico-container">
+      <p class="card-title">Resumen visual</p>
+      <canvas id="miGrafico"></canvas>
+    </section>
+
+    <!-- Formulario -->
+    <section class="card formulario">
+      <p class="card-title">Nueva transacción</p>
+
+      <div class="form-row">
+        <div class="form-group full">
+          <label>Descripción</label>
+          <input type="text" id="descripcion" placeholder="Ej: Salario, Supermercado..." autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="form-row two-col">
+        <div class="form-group">
+          <label>Monto (₡)</label>
+          <input type="number" id="monto" placeholder="0" inputmode="numeric" />
+        </div>
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="fecha" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group full">
+          <label>Tipo</label>
+          <div class="tipo-selector">
+            <button class="tipo-btn active" data-tipo="ingreso">💰 Ingreso</button>
+            <button class="tipo-btn" data-tipo="gasto">🛒 Gasto</button>
+            <button class="tipo-btn" data-tipo="gasto-fijo">📋 Fijo</button>
+            <button class="tipo-btn" data-tipo="gasolina">⛽ Gasolina</button>
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-agregar">
+        <span>+ Agregar</span>
+      </button>
+    </section>
+
+    <!-- Lista de transacciones -->
+    <section class="card lista">
+      <div class="lista-header">
+        <p class="card-title">Transacciones</p>
+        <span id="contador-transacciones" class="badge-count">0</span>
+      </div>
+      <ul id="lista-transacciones"></ul>
+    </section>
+
+    <!-- Botón cierre de mes -->
+    <section class="cierre">
+      <button id="btn-cerrar-mes">
+        <span class="cierre-icon">📊</span>
+        <span>Cerrar mes y exportar Excel</span>
+      </button>
+      <p class="cierre-hint">Se generará un archivo .xlsx con el resumen completo</p>
+    </section>
+
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
