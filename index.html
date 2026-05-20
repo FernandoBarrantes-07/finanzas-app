@@ -1,131 +1,221 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Finanzas FERBAGA" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Finanzas FERBAGA"/>
   <title>Finanzas FERBAGA</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-  <div id="app">
+<div id="app">
 
-    <!-- Header -->
-    <header>
+  <!-- ── HEADER ─────────────────────────────────── -->
+  <header class="main-header">
+    <div class="header-blob"></div>
+    <div class="header-content">
       <div class="header-top">
         <div>
-          <p class="header-label">MIS FINANZAS</p>
-          <h1 id="mes-actual">Cargando...</h1>
+          <p class="header-eyebrow">Control Finanzas FERBAGA</p>
+          <h1 class="header-mes" id="mes-actual">Cargando...</h1>
         </div>
-        <div class="header-icon">₡</div>
+        <button class="avatar-btn" id="btn-config" title="Configurar meta de ahorro">
+          <span>⚙️</span>
+        </button>
       </div>
 
-      <!-- Balance principal -->
-      <div class="balance-card">
-        <p class="balance-label">Disponible este mes</p>
-        <h2 id="total-disponible" class="balance-amount">₡0</h2>
-        <div class="balance-bar-track">
-          <div class="balance-bar-fill" id="balance-bar"></div>
+      <!-- Hero balance -->
+      <div class="hero-balance">
+        <p class="hero-label">Disponible este mes</p>
+        <div class="hero-amount-wrap">
+          <span class="hero-currency">₡</span>
+          <h2 class="hero-amount" id="total-disponible">0</h2>
         </div>
-        <p class="balance-hint" id="balance-hint">Agregá tus ingresos para comenzar</p>
+        <p class="hero-sub" id="balance-hint">Agregá tus ingresos para comenzar</p>
       </div>
-    </header>
 
-    <!-- Tarjetas de resumen -->
-    <section class="resumen">
-      <div class="tarjeta">
-        <div class="tarjeta-icon ingreso-icon">↑</div>
-        <p class="tarjeta-label">Ingresos</p>
-        <h3 id="total-ingresos" class="tarjeta-monto ingreso-color">₡0</h3>
+      <!-- Mini stats -->
+      <div class="mini-stats">
+        <div class="mini-stat">
+          <span class="mini-dot dot-green"></span>
+          <span class="mini-label">Ingresos</span>
+          <span class="mini-val" id="stat-ingresos">₡0</span>
+        </div>
+        <div class="mini-divider"></div>
+        <div class="mini-stat">
+          <span class="mini-dot dot-red"></span>
+          <span class="mini-label">Gastos</span>
+          <span class="mini-val" id="stat-gastos">₡0</span>
+        </div>
+        <div class="mini-divider"></div>
+        <div class="mini-stat">
+          <span class="mini-dot dot-yellow"></span>
+          <span class="mini-label">Gasolina</span>
+          <span class="mini-val" id="stat-gasolina">₡0</span>
+        </div>
+        <div class="mini-divider"></div>
+        <div class="mini-stat">
+          <span class="mini-dot dot-blue"></span>
+          <span class="mini-label">Ahorros</span>
+          <span class="mini-val" id="stat-ahorros">₡0</span>
+        </div>
       </div>
-      <div class="tarjeta">
-        <div class="tarjeta-icon gasto-icon">↓</div>
-        <p class="tarjeta-label">Gastos</p>
-        <h3 id="total-gastos" class="tarjeta-monto gasto-color">₡0</h3>
-      </div>
-      <div class="tarjeta">
-        <div class="tarjeta-icon gasolina-icon">⛽</div>
-        <p class="tarjeta-label">Gasolina</p>
-        <h3 id="total-gasolina" class="tarjeta-monto gasolina-color">₡0</h3>
-      </div>
-    </section>
+    </div>
+  </header>
+
+  <!-- ── TAB NAV ─────────────────────────────────── -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="dashboard">
+      <span class="tab-icon">📊</span>
+      <span>Dashboard</span>
+    </button>
+    <button class="tab-btn" data-tab="transacciones">
+      <span class="tab-icon">💸</span>
+      <span>Gastos</span>
+    </button>
+    <button class="tab-btn" data-tab="ahorros">
+      <span class="tab-icon">🏦</span>
+      <span>Ahorros</span>
+    </button>
+  </nav>
+
+  <!-- ── TAB: DASHBOARD ─────────────────────────── -->
+  <section class="tab-content active" id="tab-dashboard">
 
     <!-- Gráfico -->
-    <section class="card grafico-container">
-      <p class="card-title">Resumen visual</p>
+    <div class="card">
+      <div class="card-header">
+        <p class="card-title">Resumen del mes</p>
+        <span class="card-badge" id="badge-mes"></span>
+      </div>
       <canvas id="miGrafico"></canvas>
-    </section>
+    </div>
+
+    <!-- Ahorro progress -->
+    <div class="card ahorro-card" id="ahorro-progress-card">
+      <div class="card-header">
+        <p class="card-title">Meta de ahorro</p>
+        <span class="ahorro-pct" id="ahorro-pct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="ahorro-nums">
+        <span id="ahorro-actual-label">₡0 ahorrado</span>
+        <span id="ahorro-meta-label">Meta: ₡0</span>
+      </div>
+    </div>
+
+    <!-- Cerrar mes -->
+    <button class="close-month-btn" id="btn-cerrar-mes">
+      <span>📤</span>
+      <div>
+        <strong>Cerrar mes y exportar Excel</strong>
+        <small>Genera un archivo con todos los datos</small>
+      </div>
+    </button>
+
+  </section>
+
+  <!-- ── TAB: TRANSACCIONES ─────────────────────── -->
+  <section class="tab-content" id="tab-transacciones">
 
     <!-- Formulario -->
-    <section class="card formulario">
+    <div class="card form-card">
       <p class="card-title">Nueva transacción</p>
 
-      <div class="form-row">
-        <div class="form-group full">
-          <label>Descripción</label>
-          <input type="text" id="descripcion" placeholder="Ej: Salario, Supermercado..." autocomplete="off" />
-        </div>
+      <input class="field" type="text" id="descripcion" placeholder="Descripción (ej: Supermercado)"/>
+
+      <div class="field-row">
+        <input class="field" type="number" id="monto" placeholder="Monto ₡" inputmode="numeric"/>
+        <input class="field" type="date" id="fecha"/>
       </div>
 
-      <div class="form-row two-col">
-        <div class="form-group">
-          <label>Monto (₡)</label>
-          <input type="number" id="monto" placeholder="0" inputmode="numeric" />
-        </div>
-        <div class="form-group">
-          <label>Fecha</label>
-          <input type="date" id="fecha" />
-        </div>
+      <div class="chip-group" id="tipo-chips">
+        <button class="chip active" data-tipo="ingreso">💰 Ingreso</button>
+        <button class="chip" data-tipo="gasto">🛒 Gasto</button>
+        <button class="chip" data-tipo="gasto-fijo">📋 Fijo</button>
+        <button class="chip" data-tipo="gasolina">⛽ Gasolina</button>
       </div>
 
-      <div class="form-row">
-        <div class="form-group full">
-          <label>Tipo</label>
-          <div class="tipo-selector">
-            <button class="tipo-btn active" data-tipo="ingreso">💰 Ingreso</button>
-            <button class="tipo-btn" data-tipo="gasto">🛒 Gasto</button>
-            <button class="tipo-btn" data-tipo="gasto-fijo">📋 Fijo</button>
-            <button class="tipo-btn" data-tipo="gasolina">⛽ Gasolina</button>
-          </div>
-        </div>
-      </div>
+      <button class="btn-primary" id="btn-agregar">Agregar transacción</button>
+    </div>
 
-      <button id="btn-agregar">
-        <span>+ Agregar</span>
-      </button>
-    </section>
-
-    <!-- Lista de transacciones -->
-    <section class="card lista">
-      <div class="lista-header">
+    <!-- Lista -->
+    <div class="card">
+      <div class="card-header">
         <p class="card-title">Transacciones</p>
-        <span id="contador-transacciones" class="badge-count">0</span>
+        <span class="card-badge" id="contador-tx">0</span>
       </div>
       <ul id="lista-transacciones"></ul>
-    </section>
+    </div>
 
-    <!-- Botón cierre de mes -->
-    <section class="cierre">
-      <button id="btn-cerrar-mes">
-        <span class="cierre-icon">📊</span>
-        <span>Cerrar mes y exportar Excel</span>
-      </button>
-      <p class="cierre-hint">Se generará un archivo .xlsx con el resumen completo</p>
-    </section>
+  </section>
 
+  <!-- ── TAB: AHORROS ───────────────────────────── -->
+  <section class="tab-content" id="tab-ahorros">
+
+    <!-- Meta config -->
+    <div class="card meta-card">
+      <p class="card-title">Meta mensual de ahorro</p>
+      <div class="meta-input-wrap">
+        <span class="meta-prefix">₡</span>
+        <input class="field meta-field" type="number" id="meta-ahorro-input" placeholder="0" inputmode="numeric"/>
+      </div>
+      <button class="btn-secondary" id="btn-guardar-meta">Guardar meta</button>
+    </div>
+
+    <!-- Registrar ahorro -->
+    <div class="card">
+      <p class="card-title">Registrar ahorro</p>
+      <input class="field" type="text" id="ahorro-desc" placeholder="Descripción (ej: Ahorro cuenta BAC)"/>
+      <div class="field-row">
+        <input class="field" type="number" id="ahorro-monto" placeholder="Monto ₡" inputmode="numeric"/>
+        <input class="field" type="date" id="ahorro-fecha"/>
+      </div>
+      <button class="btn-primary btn-blue" id="btn-agregar-ahorro">Registrar ahorro</button>
+    </div>
+
+    <!-- Lista ahorros -->
+    <div class="card">
+      <div class="card-header">
+        <p class="card-title">Historial de ahorros</p>
+        <span class="card-badge" id="contador-ahorros">0</span>
+      </div>
+      <ul id="lista-ahorros"></ul>
+    </div>
+
+  </section>
+
+</div>
+
+<!-- Modal config -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3>Configuración</h3>
+    <p class="modal-sub">Definí tu meta de ahorro mensual</p>
+    <div class="meta-input-wrap">
+      <span class="meta-prefix">₡</span>
+      <input class="field meta-field" type="number" id="modal-meta-input" placeholder="0" inputmode="numeric"/>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-secondary" id="modal-cancel">Cancelar</button>
+      <button class="btn-primary" id="modal-save">Guardar</button>
+    </div>
   </div>
+</div>
 
-  <!-- Toast notification -->
-  <div id="toast" class="toast"></div>
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-  <script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

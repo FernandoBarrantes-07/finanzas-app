@@ -1,42 +1,103 @@
 // ─── Estado ───────────────────────────────────────────
 let transacciones = JSON.parse(localStorage.getItem('transacciones')) || [];
-let grafico = null;
+let ahorros       = JSON.parse(localStorage.getItem('ahorros'))       || [];
+let metaAhorro    = parseFloat(localStorage.getItem('metaAhorro'))    || 0;
 let tipoSeleccionado = 'ingreso';
+let grafico = null;
 
-// ─── Inicializar ──────────────────────────────────────
+// ─── Init ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   mostrarMes();
-  inicializarFecha();
-  inicializarTipoSelector();
+  setFechasHoy();
+  initTabs();
+  initChips();
+  initModal();
+  cargarMeta();
   renderizar();
 
   document.getElementById('btn-agregar').addEventListener('click', agregarTransaccion);
+  document.getElementById('btn-agregar-ahorro').addEventListener('click', agregarAhorro);
+  document.getElementById('btn-guardar-meta').addEventListener('click', guardarMetaAhorro);
   document.getElementById('btn-cerrar-mes').addEventListener('click', cerrarMes);
 });
 
-// ─── Mes actual ───────────────────────────────────────
+// ─── Mes ──────────────────────────────────────────────
 function mostrarMes() {
-  const ahora = new Date();
-  const texto = ahora.toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
+  const texto = new Date().toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
   document.getElementById('mes-actual').textContent = texto;
+  document.getElementById('badge-mes').textContent = texto;
 }
 
-// ─── Fecha por defecto = hoy ──────────────────────────
-function inicializarFecha() {
+// ─── Fechas por defecto hoy ───────────────────────────
+function setFechasHoy() {
   const hoy = new Date().toISOString().split('T')[0];
   document.getElementById('fecha').value = hoy;
+  document.getElementById('ahorro-fecha').value = hoy;
 }
 
-// ─── Selector de tipo ─────────────────────────────────
-function inicializarTipoSelector() {
-  const botones = document.querySelectorAll('.tipo-btn');
-  botones.forEach(btn => {
+// ─── Tabs ─────────────────────────────────────────────
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      botones.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
-      tipoSeleccionado = btn.dataset.tipo;
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
     });
   });
+}
+
+// ─── Chips tipo ───────────────────────────────────────
+function initChips() {
+  document.querySelectorAll('#tipo-chips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#tipo-chips .chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      tipoSeleccionado = chip.dataset.tipo;
+    });
+  });
+}
+
+// ─── Modal config ─────────────────────────────────────
+function initModal() {
+  document.getElementById('btn-config').addEventListener('click', () => {
+    document.getElementById('modal-meta-input').value = metaAhorro || '';
+    document.getElementById('modal-overlay').classList.add('open');
+  });
+  document.getElementById('modal-cancel').addEventListener('click', () => {
+    document.getElementById('modal-overlay').classList.remove('open');
+  });
+  document.getElementById('modal-save').addEventListener('click', () => {
+    const val = parseFloat(document.getElementById('modal-meta-input').value);
+    if (!isNaN(val) && val >= 0) {
+      metaAhorro = val;
+      localStorage.setItem('metaAhorro', metaAhorro);
+      cargarMeta();
+      renderizar();
+      mostrarToast('✅ Meta guardada');
+    }
+    document.getElementById('modal-overlay').classList.remove('open');
+  });
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-overlay'))
+      document.getElementById('modal-overlay').classList.remove('open');
+  });
+}
+
+// ─── Cargar meta en tab ahorros ───────────────────────
+function cargarMeta() {
+  if (document.getElementById('meta-ahorro-input'))
+    document.getElementById('meta-ahorro-input').value = metaAhorro || '';
+}
+
+// ─── Guardar meta desde tab ahorros ──────────────────
+function guardarMetaAhorro() {
+  const val = parseFloat(document.getElementById('meta-ahorro-input').value);
+  if (isNaN(val) || val < 0) { mostrarToast('⚠️ Ingresá un monto válido'); return; }
+  metaAhorro = val;
+  localStorage.setItem('metaAhorro', metaAhorro);
+  renderizar();
+  mostrarToast('✅ Meta guardada: ' + formatear(metaAhorro));
 }
 
 // ─── Agregar transacción ──────────────────────────────
@@ -45,178 +106,202 @@ function agregarTransaccion() {
   const monto       = parseFloat(document.getElementById('monto').value);
   const fechaInput  = document.getElementById('fecha').value;
 
-  if (!descripcion) {
-    mostrarToast('⚠️ Ingresá una descripción');
-    return;
-  }
-  if (isNaN(monto) || monto <= 0) {
-    mostrarToast('⚠️ Ingresá un monto válido');
-    return;
-  }
-  if (!fechaInput) {
-    mostrarToast('⚠️ Seleccioná una fecha');
-    return;
-  }
+  if (!descripcion)           { mostrarToast('⚠️ Escribí una descripción'); return; }
+  if (isNaN(monto) || monto <= 0) { mostrarToast('⚠️ Ingresá un monto válido'); return; }
+  if (!fechaInput)            { mostrarToast('⚠️ Seleccioná una fecha'); return; }
 
   const fecha = new Date(fechaInput + 'T12:00:00').toLocaleDateString('es-CR');
-
-  const nueva = {
-    id: Date.now(),
-    descripcion,
-    monto,
-    tipo: tipoSeleccionado,
-    fecha
-  };
-
-  transacciones.push(nueva);
+  transacciones.push({ id: Date.now(), descripcion, monto, tipo: tipoSeleccionado, fecha });
   guardar();
   renderizar();
-  limpiarFormulario();
 
-  const iconos = { ingreso: '💰', gasto: '🛒', 'gasto-fijo': '📋', gasolina: '⛽' };
-  mostrarToast(`${iconos[tipoSeleccionado]} Transacción agregada`);
-}
-
-// ─── Guardar en LocalStorage ──────────────────────────
-function guardar() {
-  localStorage.setItem('transacciones', JSON.stringify(transacciones));
-}
-
-// ─── Limpiar formulario ───────────────────────────────
-function limpiarFormulario() {
   document.getElementById('descripcion').value = '';
   document.getElementById('monto').value = '';
-  inicializarFecha();
+
+  const labels = { ingreso: '💰 Ingreso', gasto: '🛒 Gasto', 'gasto-fijo': '📋 Gasto fijo', gasolina: '⛽ Gasolina' };
+  mostrarToast(labels[tipoSeleccionado] + ' agregado');
+}
+
+// ─── Agregar ahorro ───────────────────────────────────
+function agregarAhorro() {
+  const descripcion = document.getElementById('ahorro-desc').value.trim();
+  const monto       = parseFloat(document.getElementById('ahorro-monto').value);
+  const fechaInput  = document.getElementById('ahorro-fecha').value;
+
+  if (!descripcion)               { mostrarToast('⚠️ Escribí una descripción'); return; }
+  if (isNaN(monto) || monto <= 0) { mostrarToast('⚠️ Ingresá un monto válido'); return; }
+  if (!fechaInput)                { mostrarToast('⚠️ Seleccioná una fecha'); return; }
+
+  const fecha = new Date(fechaInput + 'T12:00:00').toLocaleDateString('es-CR');
+  ahorros.push({ id: Date.now(), descripcion, monto, fecha });
+  localStorage.setItem('ahorros', JSON.stringify(ahorros));
+  renderizar();
+
+  document.getElementById('ahorro-desc').value = '';
+  document.getElementById('ahorro-monto').value = '';
+  mostrarToast('🏦 Ahorro registrado');
+}
+
+// ─── Guardar transacciones ────────────────────────────
+function guardar() {
+  localStorage.setItem('transacciones', JSON.stringify(transacciones));
 }
 
 // ─── Calcular totales ─────────────────────────────────
 function calcularTotales() {
   const ingresos = transacciones
     .filter(t => t.tipo === 'ingreso')
-    .reduce((sum, t) => sum + t.monto, 0);
+    .reduce((s, t) => s + t.monto, 0);
 
   const gastos = transacciones
     .filter(t => t.tipo === 'gasto' || t.tipo === 'gasto-fijo' || t.tipo === 'gasolina')
-    .reduce((sum, t) => sum + t.monto, 0);
+    .reduce((s, t) => s + t.monto, 0);
 
   const gasolina = transacciones
     .filter(t => t.tipo === 'gasolina')
-    .reduce((sum, t) => sum + t.monto, 0);
+    .reduce((s, t) => s + t.monto, 0);
 
-  const disponible = ingresos - gastos;
+  const totalAhorros = ahorros.reduce((s, a) => s + a.monto, 0);
+  const disponible   = ingresos - gastos - totalAhorros;
 
-  return { ingresos, gastos, disponible, gasolina };
+  return { ingresos, gastos, gasolina, totalAhorros, disponible };
 }
 
-// ─── Renderizar todo ──────────────────────────────────
+// ─── Renderizar ───────────────────────────────────────
 function renderizar() {
-  const { ingresos, gastos, disponible, gasolina } = calcularTotales();
+  const { ingresos, gastos, gasolina, totalAhorros, disponible } = calcularTotales();
 
-  // Balance principal
-  const balanceEl = document.getElementById('total-disponible');
-  const barEl     = document.getElementById('balance-bar');
-  const hintEl    = document.getElementById('balance-hint');
+  // Hero
+  const heroEl = document.getElementById('total-disponible');
+  heroEl.textContent = formatearNumero(disponible);
+  heroEl.classList.toggle('negativo', disponible < 0);
 
-  balanceEl.textContent = formatear(disponible);
-  balanceEl.classList.toggle('negativo', disponible < 0);
-  barEl.classList.toggle('negativo', disponible < 0);
-
-  const pct = ingresos > 0 ? Math.min((disponible / ingresos) * 100, 100) : 0;
-  barEl.style.width = Math.max(pct, 0) + '%';
-
+  const hintEl = document.getElementById('balance-hint');
   if (ingresos === 0) {
     hintEl.textContent = 'Agregá tus ingresos para comenzar';
   } else if (disponible < 0) {
-    hintEl.textContent = `Gastaste ${formatear(Math.abs(disponible))} más de lo que ingresaste`;
+    hintEl.textContent = `Déficit de ${formatear(Math.abs(disponible))} este mes`;
   } else {
-    const pctGastado = Math.round((gastos / ingresos) * 100);
-    hintEl.textContent = `Gastaste el ${pctGastado}% de tus ingresos`;
+    const pct = Math.round((gastos / ingresos) * 100);
+    hintEl.textContent = `Gastaste el ${pct}% de tus ingresos`;
   }
 
-  // Tarjetas
-  document.getElementById('total-ingresos').textContent  = formatear(ingresos);
-  document.getElementById('total-gastos').textContent    = formatear(gastos);
-  document.getElementById('total-gasolina').textContent  = formatear(gasolina);
+  // Mini stats
+  document.getElementById('stat-ingresos').textContent  = formatear(ingresos);
+  document.getElementById('stat-gastos').textContent    = formatear(gastos);
+  document.getElementById('stat-gasolina').textContent  = formatear(gasolina);
+  document.getElementById('stat-ahorros').textContent   = formatear(totalAhorros);
 
-  // Contador
-  document.getElementById('contador-transacciones').textContent = transacciones.length;
+  // Contadores
+  document.getElementById('contador-tx').textContent      = transacciones.length;
+  document.getElementById('contador-ahorros').textContent = ahorros.length;
+
+  // Ahorro progress
+  const pctAhorro = metaAhorro > 0 ? Math.min((totalAhorros / metaAhorro) * 100, 100) : 0;
+  const fillEl = document.getElementById('progress-fill');
+  fillEl.style.width = pctAhorro + '%';
+  fillEl.classList.toggle('completo', pctAhorro >= 100);
+  document.getElementById('ahorro-pct').textContent       = Math.round(pctAhorro) + '%';
+  document.getElementById('ahorro-actual-label').textContent = formatear(totalAhorros) + ' ahorrado';
+  document.getElementById('ahorro-meta-label').textContent   = 'Meta: ' + (metaAhorro > 0 ? formatear(metaAhorro) : 'sin definir');
 
   renderizarLista();
-  renderizarGrafico(ingresos, gastos, gasolina, disponible);
+  renderizarListaAhorros();
+  renderizarGrafico(ingresos, gastos - gasolina, gasolina, totalAhorros, Math.max(disponible, 0));
 }
 
-// ─── Formatear colones ────────────────────────────────
+// ─── Formato colones ──────────────────────────────────
 function formatear(monto) {
   return '₡' + Math.abs(monto).toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-// ─── Renderizar lista ─────────────────────────────────
+function formatearNumero(monto) {
+  return Math.abs(monto).toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+// ─── Lista transacciones ──────────────────────────────
 function renderizarLista() {
   const ul = document.getElementById('lista-transacciones');
   ul.innerHTML = '';
 
   if (transacciones.length === 0) {
-    ul.innerHTML = `
-      <div class="empty-state">
-        <span>📭</span>
-        Sin transacciones este mes
-      </div>`;
+    ul.innerHTML = `<div class="empty-state"><span class="empty-icon">📭</span>Sin transacciones este mes</div>`;
     return;
   }
 
-  const config = {
-    'ingreso':    { emoji: '💰', bg: 'var(--green-dim)',   monto: 'ingreso-color',  signo: '+' },
-    'gasto':      { emoji: '🛒', bg: 'var(--red-dim)',     monto: 'gasto-color',    signo: '-' },
-    'gasto-fijo': { emoji: '📋', bg: 'var(--blue-dim)',    monto: 'gasto-color',    signo: '-' },
-    'gasolina':   { emoji: '⛽', bg: 'var(--orange-dim)', monto: 'gasolina-color', signo: '-' },
+  const cfg = {
+    ingreso:    { emoji: '💰', bg: 'var(--green-dim)',  color: 'color-green',  signo: '+' },
+    gasto:      { emoji: '🛒', bg: 'var(--red-dim)',    color: 'color-red',    signo: '-' },
+    'gasto-fijo':{ emoji: '📋', bg: 'var(--blue-dim)', color: 'color-red',    signo: '-' },
+    gasolina:   { emoji: '⛽', bg: 'var(--yellow-dim)', color: 'color-yellow', signo: '-' },
   };
 
   [...transacciones].reverse().forEach(t => {
-    const c   = config[t.tipo];
-    const esFijo     = t.tipo === 'gasto-fijo';
-    const esGasolina = t.tipo === 'gasolina';
-
-    const badge = esFijo
-      ? `<span class="item-badge badge-fijo">Fijo</span>`
-      : esGasolina
-        ? `<span class="item-badge badge-gasolina">Gasolina</span>`
+    const c = cfg[t.tipo];
+    const badge = t.tipo === 'gasto-fijo'
+      ? `<span class="item-badge-small badge-fijo">Fijo</span>`
+      : t.tipo === 'gasolina'
+        ? `<span class="item-badge-small badge-gasolina">⛽</span>`
         : '';
 
     const li = document.createElement('li');
     li.className = 'item-tx';
     li.innerHTML = `
-      <div class="item-dot" style="background:${c.bg}">${c.emoji}</div>
+      <div class="item-emoji" style="background:${c.bg}">${c.emoji}</div>
       <div class="item-info">
-        <div class="item-desc">${t.descripcion}</div>
-        <div class="item-meta">
-          <span class="item-fecha">${t.fecha}</span>
-          ${badge}
-        </div>
+        <div class="item-desc">${t.descripcion}${badge}</div>
+        <div class="item-fecha">${t.fecha}</div>
       </div>
-      <div class="item-monto ${c.monto}">${c.signo}${formatear(t.monto)}</div>
+      <div class="item-amount ${c.color}">${c.signo}${formatear(t.monto)}</div>
     `;
     ul.appendChild(li);
   });
 }
 
-// ─── Gráfico de barras ────────────────────────────────
-function renderizarGrafico(ingresos, gastos, gasolina, disponible) {
+// ─── Lista ahorros ────────────────────────────────────
+function renderizarListaAhorros() {
+  const ul = document.getElementById('lista-ahorros');
+  ul.innerHTML = '';
+
+  if (ahorros.length === 0) {
+    ul.innerHTML = `<div class="empty-state"><span class="empty-icon">🏦</span>Sin ahorros registrados</div>`;
+    return;
+  }
+
+  [...ahorros].reverse().forEach(a => {
+    const li = document.createElement('li');
+    li.className = 'item-tx';
+    li.innerHTML = `
+      <div class="item-emoji" style="background:var(--blue-dim)">🏦</div>
+      <div class="item-info">
+        <div class="item-desc">${a.descripcion}</div>
+        <div class="item-fecha">${a.fecha}</div>
+      </div>
+      <div class="item-amount color-blue">+${formatear(a.monto)}</div>
+    `;
+    ul.appendChild(li);
+  });
+}
+
+// ─── Gráfico ──────────────────────────────────────────
+function renderizarGrafico(ingresos, gastos, gasolina, ahorro, disponible) {
   const ctx = document.getElementById('miGrafico').getContext('2d');
   if (grafico) grafico.destroy();
 
   grafico = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['Ingresos', 'Gastos', 'Gasolina', 'Disponible'],
+      labels: ['Ingresos', 'Gastos', 'Gasolina', 'Ahorros', 'Disponible'],
       datasets: [{
-        data: [ingresos, gastos - gasolina, gasolina, Math.max(disponible, 0)],
+        data: [ingresos, gastos, gasolina, ahorro, disponible],
         backgroundColor: [
-          'rgba(0, 232, 122, 0.85)',
-          'rgba(255, 77, 106, 0.85)',
-          'rgba(255, 170, 0, 0.85)',
-          'rgba(77, 142, 255, 0.85)',
+          'rgba(0,200,83,0.85)',
+          'rgba(232,0,30,0.85)',
+          'rgba(255,171,0,0.85)',
+          'rgba(41,121,255,0.85)',
+          'rgba(255,255,255,0.15)',
         ],
-        borderRadius: 8,
+        borderRadius: 10,
         borderSkipped: false,
       }]
     },
@@ -232,17 +317,17 @@ function renderizarGrafico(ingresos, gastos, gasolina, disponible) {
       },
       scales: {
         x: {
-          ticks: { color: '#6b7394', font: { family: 'DM Sans', size: 11 } },
-          grid:  { color: '#2a2f42' }
+          ticks: { color: '#666', font: { family: 'Outfit', size: 11 } },
+          grid:  { color: '#222' }
         },
         y: {
           beginAtZero: true,
           ticks: {
-            color: '#6b7394',
-            font: { family: 'DM Mono', size: 10 },
+            color: '#666',
+            font: { family: 'Outfit', size: 10 },
             callback: val => '₡' + val.toLocaleString('es-CR')
           },
-          grid: { color: '#2a2f42' }
+          grid: { color: '#222' }
         }
       }
     }
@@ -250,73 +335,78 @@ function renderizarGrafico(ingresos, gastos, gasolina, disponible) {
 }
 
 // ─── Toast ────────────────────────────────────────────
-function mostrarToast(mensaje) {
-  const toast = document.getElementById('toast');
-  toast.textContent = mensaje;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2500);
+function mostrarToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
 
 // ─── Cerrar mes ───────────────────────────────────────
 function cerrarMes() {
-  if (transacciones.length === 0) {
-    mostrarToast('📭 No hay transacciones para exportar');
+  if (transacciones.length === 0 && ahorros.length === 0) {
+    mostrarToast('📭 No hay datos para exportar');
     return;
   }
 
-  const confirmar = confirm('¿Cerrar el mes?\n\nSe exportará un archivo Excel con todos los datos y luego se borrarán las transacciones.');
-  if (!confirmar) return;
+  const ok = confirm('¿Cerrar el mes?\n\nSe exportará un Excel con todos los datos y se borrarán las transacciones y ahorros del mes.');
+  if (!ok) return;
 
   exportarExcel();
 
   setTimeout(() => {
     transacciones = [];
+    ahorros = [];
     guardar();
+    localStorage.setItem('ahorros', JSON.stringify(ahorros));
     renderizar();
-    mostrarToast('✅ Mes cerrado correctamente');
-  }, 500);
+    mostrarToast('✅ Mes cerrado — Excel generado');
+  }, 400);
 }
 
 // ─── Exportar Excel ───────────────────────────────────
 function exportarExcel() {
-  const { ingresos, gastos, disponible, gasolina } = calcularTotales();
+  const { ingresos, gastos, gasolina, totalAhorros, disponible } = calcularTotales();
   const mes = new Date().toLocaleDateString('es-CR', { month: 'long', year: 'numeric' });
 
-  const tipoNombre = {
-    'ingreso':    'Ingreso',
-    'gasto':      'Gasto',
-    'gasto-fijo': 'Gasto Fijo',
-    'gasolina':   'Gasolina'
-  };
+  const tipos = { ingreso: 'Ingreso', gasto: 'Gasto', 'gasto-fijo': 'Gasto Fijo', gasolina: 'Gasolina' };
 
-  const datos = transacciones.map(t => ({
+  // Hoja 1: Transacciones
+  const datosT = transacciones.map(t => ({
     'Fecha':       t.fecha,
     'Descripción': t.descripcion,
-    'Tipo':        tipoNombre[t.tipo],
+    'Tipo':        tipos[t.tipo],
     'Monto (₡)':  t.tipo === 'ingreso' ? t.monto : -t.monto
   }));
 
-  // Fila vacía de separación
-  datos.push({ 'Fecha': '', 'Descripción': '', 'Tipo': '', 'Monto (₡)': '' });
+  datosT.push({});
+  datosT.push({ 'Descripción': '── RESUMEN ──' });
+  datosT.push({ 'Descripción': 'TOTAL INGRESOS',   'Monto (₡)': ingresos });
+  datosT.push({ 'Descripción': 'TOTAL GASTOS',     'Monto (₡)': -(gastos - gasolina) });
+  datosT.push({ 'Descripción': 'TOTAL GASOLINA',   'Monto (₡)': -gasolina });
+  datosT.push({ 'Descripción': 'TOTAL AHORROS',    'Monto (₡)': -totalAhorros });
+  datosT.push({ 'Descripción': 'DISPONIBLE',       'Monto (₡)': disponible });
 
-  // Resumen
-  datos.push({ 'Descripción': '── RESUMEN DEL MES ──', 'Monto (₡)': '' });
-  datos.push({ 'Descripción': 'TOTAL INGRESOS',   'Monto (₡)': ingresos        });
-  datos.push({ 'Descripción': 'TOTAL GASTOS',     'Monto (₡)': -(gastos - gasolina) });
-  datos.push({ 'Descripción': 'TOTAL GASOLINA',   'Monto (₡)': -gasolina       });
-  datos.push({ 'Descripción': 'DISPONIBLE',       'Monto (₡)': disponible      });
+  // Hoja 2: Ahorros
+  const datosA = ahorros.map(a => ({
+    'Fecha':       a.fecha,
+    'Descripción': a.descripcion,
+    'Monto (₡)':  a.monto
+  }));
+  datosA.push({});
+  datosA.push({ 'Descripción': 'TOTAL AHORRADO', 'Monto (₡)': totalAhorros });
+  datosA.push({ 'Descripción': 'META',           'Monto (₡)': metaAhorro });
+  datosA.push({ 'Descripción': 'DIFERENCIA',     'Monto (₡)': totalAhorros - metaAhorro });
 
-  const hoja  = XLSX.utils.json_to_sheet(datos);
   const libro = XLSX.utils.book_new();
 
-  // Ancho de columnas
-  hoja['!cols'] = [
-    { wch: 14 },
-    { wch: 30 },
-    { wch: 14 },
-    { wch: 16 }
-  ];
+  const hojaT = XLSX.utils.json_to_sheet(datosT);
+  hojaT['!cols'] = [{ wch: 14 }, { wch: 30 }, { wch: 14 }, { wch: 16 }];
+  XLSX.utils.book_append_sheet(libro, hojaT, 'Transacciones');
 
-  XLSX.utils.book_append_sheet(libro, hoja, mes);
+  const hojaA = XLSX.utils.json_to_sheet(datosA);
+  hojaA['!cols'] = [{ wch: 14 }, { wch: 30 }, { wch: 16 }];
+  XLSX.utils.book_append_sheet(libro, hojaA, 'Ahorros');
+
   XLSX.writeFile(libro, `Finanzas_${mes}.xlsx`);
 }
