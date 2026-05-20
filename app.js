@@ -173,7 +173,7 @@ function renderizar() {
 
   // Hero
   const heroEl = document.getElementById('total-disponible');
-  heroEl.textContent = formatearNumero(disponible);
+  heroEl.textContent = (disponible < 0 ? '-' : '') + formatearNumero(disponible);
   heroEl.classList.toggle('negativo', disponible < 0);
 
   const hintEl = document.getElementById('balance-hint');
